@@ -62,6 +62,24 @@ public class ChatService(AppDbContext context) : IChatService
             return new Response<ChatMessageDto>(HttpStatusCode.BadRequest, "Message cannot be empty");
         }
 
+        var normalizedName = groupName.Trim();
+
+        var group = await context.ChatGroups
+            .FirstOrDefaultAsync(g => g.Name == normalizedName);
+
+        if (group == null)
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.NotFound, "Group not found");
+        }
+
+        var isMember = await context.ChatGroupMembers
+            .AnyAsync(m => m.GroupId == group.Id && m.UserId == userId);
+
+        if (!isMember)
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.Forbidden, "User is not a member of this group");
+        }
+
         var entity = new ChatMessage
         {
             Id = Guid.NewGuid(),
@@ -70,7 +88,7 @@ public class ChatService(AppDbContext context) : IChatService
             Message = dto.Message,
             CreatedAt = DateTime.UtcNow,
             IsPrivate = false,
-            GroupName = groupName,
+            GroupName = normalizedName,
             ReceiverUserId = null
         };
 
