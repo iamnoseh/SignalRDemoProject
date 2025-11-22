@@ -55,7 +55,7 @@ public static class ServiceCollectionExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
             };
 
-            // Барои SignalR (access_token дар query)
+            // SignalR (access_token дар query)
             options.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>
