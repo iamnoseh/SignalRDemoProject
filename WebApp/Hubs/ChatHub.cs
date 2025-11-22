@@ -70,7 +70,7 @@ public class ChatHub(IChatService chatService, IGroupService groupService) : Hub
         }
     }
 
-    // 1-1 приватный чат
+    // 1-1
     public async Task SendPrivateMessage(string toUserId, string message)
     {
         var fromUserId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
