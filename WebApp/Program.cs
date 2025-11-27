@@ -5,6 +5,7 @@ using Serilog;
 using WebApp.Extensions;
 using WebApp.Hubs;
 using WebApp.Middleware;
+using AspNetCoreRateLimit;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -26,6 +27,22 @@ try
 {
     Log.Information("Starting SignalR Chat application");
 
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Add services to the container.
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    
+    // Register Application Services
+    builder.Services.AddApplicationServices(builder.Configuration);
+    
+    // Register FriendService
+    builder.Services.AddScoped<Application.Chat.IFriendService, Infrastructure.Chat.FriendService>();
+
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo
+        {
             Title = "SignalR Chat API",
             Version = "v1"
         });
@@ -52,6 +69,9 @@ try
             { jwtSecurityScheme, Array.Empty<string>() }
         });
     });
+
+    // Use Serilog
+    builder.Host.UseSerilog();
 
     var app = builder.Build();
 
@@ -81,6 +101,13 @@ try
         }
     }
 
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
     // Add global exception middleware
     app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -90,6 +117,15 @@ try
     // Add Serilog request logging
     app.UseSerilogRequestLogging();
 
+    // Enable static files for uploaded media
+    app.UseStaticFiles();
+
+    app.UseHttpsRedirection();
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.MapHub<ChatHub>("/chatHub");
 
     Log.Information("Application configured successfully, starting...");
     app.Run();

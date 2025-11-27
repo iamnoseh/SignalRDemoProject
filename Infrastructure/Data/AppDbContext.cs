@@ -10,6 +10,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ChatMessage> ChatMessages { get; set; }
     public DbSet<ChatGroup> ChatGroups { get; set; }
     public DbSet<ChatGroupMember> ChatGroupMembers { get; set; }
+    public DbSet<FriendRequest> FriendRequests { get; set; }
+    public DbSet<Friendship> Friendships { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +76,38 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithMany(u => u.GroupMemberships)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // FriendRequest configuration
+        modelBuilder.Entity<FriendRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Sender)
+                .WithMany(u => u.SentFriendRequests)
+                .HasForeignKey(e => e.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Receiver)
+                .WithMany(u => u.ReceivedFriendRequests)
+                .HasForeignKey(e => e.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Friendship configuration
+        modelBuilder.Entity<Friendship>(entity =>
+        {
+            entity.HasKey(e => new { e.User1Id, e.User2Id });
+
+            entity.HasOne(e => e.User1)
+                .WithMany()
+                .HasForeignKey(e => e.User1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.User2)
+                .WithMany()
+                .HasForeignKey(e => e.User2Id)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

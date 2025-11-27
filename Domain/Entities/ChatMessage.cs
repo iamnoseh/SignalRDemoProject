@@ -11,6 +11,9 @@ public class ChatMessage
     public string UserId { get; set; } = default!;
     public string UserName { get; set; } = default!;
     public string Message { get; set; } = default!;
+    public MessageType Type { get; set; } = MessageType.Text;
+    public string? FileUrl { get; set; }
+    public string? FileName { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Барои 1-1 чат ва групповой чат
