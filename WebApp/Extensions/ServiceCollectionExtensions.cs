@@ -77,6 +77,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGroupService, GroupService>();
         services.AddSingleton<IUserStatusService, UserStatusService>();
 
+        // SignalR
+        services.AddSignalR();
+
         // Rate Limiting
         services.AddMemoryCache();
         services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
