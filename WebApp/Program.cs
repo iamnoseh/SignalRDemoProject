@@ -19,7 +19,7 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithProperty("Application", "SignalRDemo")
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .WriteTo.File("logs/signalr-.txt", 
+    .WriteTo.File("logs/signalr-.txt",
         rollingInterval: RollingInterval.Day,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
@@ -29,13 +29,16 @@ try
     Log.Information("Starting SignalR Chat application");
 
     var builder = WebApplication.CreateBuilder(args);
+
+    // CORS 
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowAll", policy =>
         {
             policy.AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowAnyOrigin();
+                  .AllowAnyOrigin()
+                  .AllowCredentials(); 
         });
     });
 
@@ -59,7 +62,7 @@ try
             Name = "Authorization",
             In = ParameterLocation.Header,
             Type = SecuritySchemeType.Http,
-            Description = "Format : Bearer {token} ",
+            Description = "Format: Bearer {token}",
             Reference = new OpenApiReference
             {
                 Id = "Bearer",
@@ -67,8 +70,7 @@ try
             }
         };
 
-        c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
-
+        c.AddSecurityDefinition("Bearer", jwtSecurityScheme);
         c.AddSecurityRequirement(new OpenApiSecurityRequirement
         {
             { jwtSecurityScheme, Array.Empty<string>() }
@@ -76,53 +78,52 @@ try
     });
 
     builder.Host.UseSerilog();
+
     var app = builder.Build();
 
     using (var scope = app.Services.CreateScope())
     {
-        try
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Log.Information("Checking for pending database migrations...");
+        var pending = dbContext.Database.GetPendingMigrations().ToList();
+        if (pending.Any())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            Log.Information("Checking for pending database migrations...");
-            
-            var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
-            if (pendingMigrations.Any())
-            {
-                dbContext.Database.Migrate();
-                Log.Information("Database migrations applied successfully");
-            }
-            else
-            {
-                Log.Information("Database is up to date, no migrations to apply");
-            }
+            Log.Information("Applying migrations: {Migrations}", string.Join(", ", pending));
+            dbContext.Database.Migrate();
+            Log.Information("Migrations applied successfully");
         }
-        catch (Exception ex)
+        else
         {
-            Log.Error(ex, "An error occurred while migrating the database");
-            throw;
+            Log.Information("Database is up to date");
         }
     }
 
-    if (app.Environment.IsDevelopment())
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "SignalR Chat API v1");
+        c.RoutePrefix = "swagger";           
+        c.DisplayOperationId();              
+        c.DisplayRequestDuration();         
+    });
 
     app.UseMiddleware<GlobalExceptionMiddleware>();
     app.UseIpRateLimiting();
     app.UseSerilogRequestLogging();
     app.UseStaticFiles();
     app.UseHttpsRedirection();
+
     app.UseAuthentication();
     app.UseAuthorization();
 
     app.UseCors("AllowAll");
 
     app.MapControllers();
-    app.MapHub<ChatHub>("/chatHub").RequireCors("AllowAll"); 
+    app.MapHub<ChatHub>("/chatHub").RequireCors("AllowAll");
 
-    Log.Information("Application configured successfully, starting...");
+    Log.Information("Application configured successfully. Listening on {Urls}", 
+        string.Join(", ", builder.Configuration.GetValue<string>("ASPNETCORE_URLS") ?? "http://localhost:1111"));
+    
     app.Run();
 }
 catch (Exception ex)
