@@ -1,9 +1,9 @@
 using System.Net;
 using Application.Chat;
 using Application.Chat.Dto;
-using Application.Common;
 using Application.Responses;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

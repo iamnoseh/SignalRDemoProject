@@ -4,6 +4,7 @@ using Application.Auth;
 using Application.Auth.Dto;
 using Application.Responses;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;

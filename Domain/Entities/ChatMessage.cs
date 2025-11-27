@@ -1,3 +1,4 @@
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
@@ -15,13 +16,9 @@ public class ChatMessage
     public string? FileUrl { get; set; }
     public string? FileName { get; set; }
     public DateTime CreatedAt { get; set; }
-
-    // Барои 1-1 чат ва групповой чат
     public bool IsPrivate { get; set; }
     public string? ReceiverUserId { get; set; }
     public string? GroupName { get; set; }
-    
-    // Audit fields барои edit/delete
     public bool IsEdited { get; set; }
     public DateTime? EditedAt { get; set; }
     public bool IsDeleted { get; set; }

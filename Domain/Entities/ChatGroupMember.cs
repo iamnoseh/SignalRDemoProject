@@ -1,16 +1,11 @@
-namespace Domain.Entities;
+using Domain.Entities;
+using Domain.Enums;
 
-public enum GroupMemberRole
-{
-    Member = 0,
-    Admin = 1,
-    Owner = 2
-}
+namespace Domain.Entities;
 
 public class ChatGroupMember
 {
     public Guid Id { get; set; }
-
     public Guid GroupId { get; set; }
     public ChatGroup Group { get; set; } = default!;
 

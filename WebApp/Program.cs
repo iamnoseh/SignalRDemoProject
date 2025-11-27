@@ -1,3 +1,4 @@
+using Application.Chat;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -6,8 +7,9 @@ using WebApp.Extensions;
 using WebApp.Hubs;
 using WebApp.Middleware;
 using AspNetCoreRateLimit;
+using Infrastructure.Chat;
 
-// Configure Serilog
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
@@ -29,15 +31,10 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // Add services to the container.
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
-    
-    // Register Application Services
     builder.Services.AddApplicationServices(builder.Configuration);
-    
-    // Register FriendService
-    builder.Services.AddScoped<Application.Chat.IFriendService, Infrastructure.Chat.FriendService>();
+    builder.Services.AddScoped<IFriendService, FriendService>();
 
     builder.Services.AddSwaggerGen(c =>
     {
@@ -69,13 +66,8 @@ try
             { jwtSecurityScheme, Array.Empty<string>() }
         });
     });
-
-    // Use Serilog
     builder.Host.UseSerilog();
-
     var app = builder.Build();
-
-    // Автоматӣ database migration татбиқ кардан
     using (var scope = app.Services.CreateScope())
     {
         try
@@ -101,32 +93,21 @@ try
         }
     }
 
-    // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
         app.UseSwaggerUI();
     }
-
-    // Add global exception middleware
     app.UseMiddleware<GlobalExceptionMiddleware>();
 
-    // Add IP Rate Limiting (барои spam protection)
     app.UseIpRateLimiting();
-
-    // Add Serilog request logging
     app.UseSerilogRequestLogging();
-
-    // Enable static files for uploaded media
     app.UseStaticFiles();
-
     app.UseHttpsRedirection();
     app.UseAuthentication();
     app.UseAuthorization();
-
     app.MapControllers();
     app.MapHub<ChatHub>("/chatHub");
-
     Log.Information("Application configured successfully, starting...");
     app.Run();
 }

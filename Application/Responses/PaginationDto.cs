@@ -1,4 +1,4 @@
-namespace Application.Common;
+namespace Application.Responses;
 
 public class PaginationRequest
 {
@@ -14,7 +14,7 @@ public class PaginationRequest
         set => field = value switch
         {
             < 1 => 20,
-            > 100 => 100, // Max 100 items per page
+            > 100 => 100, 
             _ => value
         };
     } = 20;

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace WebApp.Extensions;
 
@@ -56,7 +57,7 @@ public static class ServiceCollectionExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
             };
 
-            // SignalR (access_token)
+          
             options.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>

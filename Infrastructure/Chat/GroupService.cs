@@ -3,6 +3,7 @@ using Application.Chat;
 using Application.Chat.Dto;
 using Application.Responses;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -128,7 +129,7 @@ public class GroupService(AppDbContext context) : IGroupService
     public async Task<Response<List<ChatGroupDto>>> GetUserGroupsAsync(string userId)
     {
         var groups = await context.ChatGroupMembers
-            .Include(m => m.Group)  // Eager loading барои N+1 пешгирӣ
+            .Include(m => m.Group)  
             .Where(m => m.UserId == userId)
             .Select(m => new ChatGroupDto
             {

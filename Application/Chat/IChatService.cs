@@ -1,5 +1,4 @@
 using Application.Chat.Dto;
-using Application.Common;
 using Application.Responses;
 
 namespace Application.Chat;

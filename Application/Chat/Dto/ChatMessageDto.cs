@@ -12,7 +12,7 @@ public class ChatMessageDto
     public string? ReceiverUserId { get; set; }
     public string? GroupName { get; set; }
     
-    public Domain.Entities.MessageType Type { get; set; }
+    public Domain.Enums.MessageType Type { get; set; }
     public string? FileUrl { get; set; }
     public string? FileName { get; set; }
 }

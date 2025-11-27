@@ -1,13 +1,7 @@
 using System;
+using Domain.Enums;
 
 namespace Domain.Entities;
-
-public enum FriendRequestStatus
-{
-    Pending,
-    Accepted,
-    Rejected
-}
 
 public class FriendRequest
 {

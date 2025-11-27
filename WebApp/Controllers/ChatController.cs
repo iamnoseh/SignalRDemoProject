@@ -1,6 +1,5 @@
 using Application.Chat;
 using Application.Chat.Dto;
-using Application.Common;
 using Application.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
