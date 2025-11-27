@@ -35,10 +35,10 @@ try
     {
         options.AddPolicy("AllowAll", policy =>
         {
-            policy.AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowAnyOrigin()
-                  .AllowCredentials(); 
+            policy.SetIsOriginAllowed(origin => true) 
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();                  
         });
     });
 
