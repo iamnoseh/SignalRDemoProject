@@ -1,5 +1,6 @@
 using Application.Auth;
 using Application.Chat;
+using AspNetCoreRateLimit;
 using Infrastructure.Auth;
 using Infrastructure.Chat;
 using Infrastructure.Data;
@@ -74,6 +75,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IGroupService, GroupService>();
+        services.AddSingleton<IUserStatusService, UserStatusService>();
+
+        // Rate Limiting
+        services.AddMemoryCache();
+        services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
+        services.Configure<IpRateLimitPolicies>(configuration.GetSection("IpRateLimitPolicies"));
+        services.AddInMemoryRateLimiting();
+        services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
         return services;
     }

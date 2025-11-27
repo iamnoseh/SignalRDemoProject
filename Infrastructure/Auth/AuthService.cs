@@ -2,9 +2,9 @@ using System.Net;
 using System.Security.Claims;
 using Application.Auth;
 using Application.Auth.Dto;
+using Application.Responses;
 using Domain.Entities;
 using Infrastructure.Helpers;
-using Infrastructure.Responses;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 

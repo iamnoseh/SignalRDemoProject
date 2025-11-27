@@ -1,6 +1,6 @@
 using Application.Auth;
 using Application.Auth.Dto;
-using Infrastructure.Responses;
+using Application.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

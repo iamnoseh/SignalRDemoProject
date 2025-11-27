@@ -10,6 +10,8 @@ public class ChatGroup
     public string OwnerUserId { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
 
+    
+    public AppUser Owner { get; set; } = default!;
     public ICollection<ChatGroupMember> Members { get; set; } = new List<ChatGroupMember>();
 }
 

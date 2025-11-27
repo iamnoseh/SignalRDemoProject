@@ -1,9 +1,10 @@
 using Application.Chat;
 using Application.Chat.Dto;
-using Infrastructure.Responses;
+using Application.Common;
+using Application.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using WebApp.Extensions;
 
 namespace WebApp.Controllers;
 
@@ -16,17 +17,17 @@ public class ChatController(IChatService chatService) : ControllerBase
     [HttpPost("send")]
     public async Task<ActionResult<Response<ChatMessageDto>>> Send([FromBody] SendMessageDto request)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        var userName = User.Identity?.Name ?? "Anonymous";
+        var userId = User.GetUserId();
+        var userName = User.GetUserName();
 
         var result = await chatService.SaveMessageAsync(userId, userName, request);
         return StatusCode(result.StatusCode, result);
     }
 
     [HttpGet("history")]
-    public async Task<ActionResult<Response<List<ChatMessageDto>>>> History([FromQuery] int count = 50)
+    public async Task<ActionResult<Response<PaginatedResponse<ChatMessageDto>>>> History([FromQuery] PaginationRequest pagination)
     {
-        var result = await chatService.GetLastMessagesAsync(count);
+        var result = await chatService.GetLastMessagesAsync(pagination);
         return StatusCode(result.StatusCode, result);
     }
 
@@ -34,8 +35,8 @@ public class ChatController(IChatService chatService) : ControllerBase
     [HttpPost("send-to-group")]
     public async Task<ActionResult<Response<ChatMessageDto>>> SendToGroup([FromBody] SendGroupMessageDto request)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        var userName = User.Identity?.Name ?? "Anonymous";
+        var userId = User.GetUserId();
+        var userName = User.GetUserName();
 
         var dto = new SendMessageDto { Message = request.Message };
         var result = await chatService.SaveGroupMessageAsync(userId, userName, request.GroupName, dto);
@@ -43,9 +44,9 @@ public class ChatController(IChatService chatService) : ControllerBase
     }
 
     [HttpGet("history/group")]
-    public async Task<ActionResult<Response<List<ChatMessageDto>>>> GroupHistory([FromQuery] string groupName, [FromQuery] int count = 50)
+    public async Task<ActionResult<Response<PaginatedResponse<ChatMessageDto>>>> GroupHistory([FromQuery] string groupName, [FromQuery] PaginationRequest pagination)
     {
-        var result = await chatService.GetGroupHistoryAsync(groupName, count);
+        var result = await chatService.GetGroupHistoryAsync(groupName, pagination);
         return StatusCode(result.StatusCode, result);
     }
 
@@ -53,8 +54,8 @@ public class ChatController(IChatService chatService) : ControllerBase
     [HttpPost("send-to-user")]
     public async Task<ActionResult<Response<ChatMessageDto>>> SendToUser([FromBody] SendPrivateMessageDto request)
     {
-        var fromUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        var fromUserName = User.Identity?.Name ?? "Anonymous";
+        var fromUserId = User.GetUserId();
+        var fromUserName = User.GetUserName();
 
         var dto = new SendMessageDto { Message = request.Message };
         var result = await chatService.SavePrivateMessageAsync(fromUserId, fromUserName, request.ToUserId, dto);
@@ -62,10 +63,27 @@ public class ChatController(IChatService chatService) : ControllerBase
     }
 
     [HttpGet("history/private")]
-    public async Task<ActionResult<Response<List<ChatMessageDto>>>> PrivateHistory([FromQuery] string otherUserId, [FromQuery] int count = 50)
+    public async Task<ActionResult<Response<PaginatedResponse<ChatMessageDto>>>> PrivateHistory([FromQuery] string otherUserId, [FromQuery] PaginationRequest pagination)
     {
-        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        var result = await chatService.GetPrivateHistoryAsync(currentUserId, otherUserId, count);
+        var currentUserId = User.GetUserId();
+        var result = await chatService.GetPrivateHistoryAsync(currentUserId, otherUserId, pagination);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    // Edit/Delete operations
+    [HttpPut("edit/{messageId}")]
+    public async Task<ActionResult<Response<ChatMessageDto>>> EditMessage(Guid messageId, [FromBody] SendMessageDto request)
+    {
+        var userId = User.GetUserId();
+        var result = await chatService.EditMessageAsync(messageId, userId, request.Message);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpDelete("{messageId}")]
+    public async Task<ActionResult<Response<bool>>> DeleteMessage(Guid messageId)
+    {
+        var userId = User.GetUserId();
+        var result = await chatService.DeleteMessageAsync(messageId, userId);
         return StatusCode(result.StatusCode, result);
     }
 }

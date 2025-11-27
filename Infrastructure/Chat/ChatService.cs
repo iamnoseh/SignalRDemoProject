@@ -1,14 +1,20 @@
 using System.Net;
 using Application.Chat;
 using Application.Chat.Dto;
+using Application.Common;
+using Application.Responses;
 using Domain.Entities;
-using Infrastructure.Responses;
 using Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Chat;
 
-public class ChatService(AppDbContext context) : IChatService
+public class ChatService(
+    AppDbContext context, 
+    UserManager<AppUser> userManager,
+    ILogger<ChatService> logger) : IChatService
 {
     public async Task<Response<ChatMessageDto>> SaveMessageAsync(string userId, string userName, SendMessageDto dto)
     {
@@ -35,19 +41,25 @@ public class ChatService(AppDbContext context) : IChatService
         return new Response<ChatMessageDto>(MapToDto(entity));
     }
 
-    public async Task<Response<List<ChatMessageDto>>> GetLastMessagesAsync(int count)
+    public async Task<Response<PaginatedResponse<ChatMessageDto>>> GetLastMessagesAsync(PaginationRequest pagination)
     {
-        count = count <= 0 ? 50 : count;
+        var query = context.ChatMessages
+            .Where(m => !m.IsPrivate && m.GroupName == null && !m.IsDeleted);
 
-        var messages = await context.ChatMessages
-            .Where(m => !m.IsPrivate && m.GroupName == null)
+        var totalCount = await query.CountAsync();
+
+        var messages = await query
             .OrderByDescending(m => m.CreatedAt)
-            .Take(count)
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .OrderBy(m => m.CreatedAt)
             .Select(m => MapToDto(m))
             .ToListAsync();
 
-        return new Response<List<ChatMessageDto>>(messages);
+        var paginatedResponse = new PaginatedResponse<ChatMessageDto>(
+            messages, totalCount, pagination.PageNumber, pagination.PageSize);
+
+        return new Response<PaginatedResponse<ChatMessageDto>>(paginatedResponse);
     }
 
     public async Task<Response<ChatMessageDto>> SaveGroupMessageAsync(string userId, string userName, string groupName, SendMessageDto dto)
@@ -98,19 +110,25 @@ public class ChatService(AppDbContext context) : IChatService
         return new Response<ChatMessageDto>(MapToDto(entity));
     }
 
-    public async Task<Response<List<ChatMessageDto>>> GetGroupHistoryAsync(string groupName, int count)
+    public async Task<Response<PaginatedResponse<ChatMessageDto>>> GetGroupHistoryAsync(string groupName, PaginationRequest pagination)
     {
-        count = count <= 0 ? 50 : count;
+        var query = context.ChatMessages
+            .Where(m => !m.IsPrivate && m.GroupName == groupName && !m.IsDeleted);
 
-        var messages = await context.ChatMessages
-            .Where(m => !m.IsPrivate && m.GroupName == groupName)
+        var totalCount = await query.CountAsync();
+
+        var messages = await query
             .OrderByDescending(m => m.CreatedAt)
-            .Take(count)
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .OrderBy(m => m.CreatedAt)
             .Select(m => MapToDto(m))
             .ToListAsync();
 
-        return new Response<List<ChatMessageDto>>(messages);
+        var paginatedResponse = new PaginatedResponse<ChatMessageDto>(
+            messages, totalCount, pagination.PageNumber, pagination.PageSize);
+
+        return new Response<PaginatedResponse<ChatMessageDto>>(paginatedResponse);
     }
 
     public async Task<Response<ChatMessageDto>> SavePrivateMessageAsync(string fromUserId, string fromUserName, string toUserId, SendMessageDto dto)
@@ -123,6 +141,15 @@ public class ChatService(AppDbContext context) : IChatService
         if (string.IsNullOrWhiteSpace(dto.Message))
         {
             return new Response<ChatMessageDto>(HttpStatusCode.BadRequest, "Message cannot be empty");
+        }
+
+        // Validate target user exists
+        var targetUser = await userManager.FindByIdAsync(toUserId);
+        if (targetUser == null)
+        {
+            logger.LogWarning("User {FromUserId} attempted to send message to non-existent user {ToUserId}", 
+                fromUserId, toUserId);
+            return new Response<ChatMessageDto>(HttpStatusCode.NotFound, "Target user not found");
         }
 
         var entity = new ChatMessage
@@ -143,21 +170,80 @@ public class ChatService(AppDbContext context) : IChatService
         return new Response<ChatMessageDto>(MapToDto(entity));
     }
 
-    public async Task<Response<List<ChatMessageDto>>> GetPrivateHistoryAsync(string currentUserId, string otherUserId, int count)
+    public async Task<Response<PaginatedResponse<ChatMessageDto>>> GetPrivateHistoryAsync(string currentUserId, string otherUserId, PaginationRequest pagination)
     {
-        count = count <= 0 ? 50 : count;
-
-        var messages = await context.ChatMessages
-            .Where(m => m.IsPrivate &&
+        var query = context.ChatMessages
+            .Where(m => m.IsPrivate && !m.IsDeleted &&
                         ((m.UserId == currentUserId && m.ReceiverUserId == otherUserId) ||
-                         (m.UserId == otherUserId && m.ReceiverUserId == currentUserId)))
+                         (m.UserId == otherUserId && m.ReceiverUserId == currentUserId)));
+
+        var totalCount = await query.CountAsync();
+
+        var messages = await query
             .OrderByDescending(m => m.CreatedAt)
-            .Take(count)
+            .Skip(pagination.Skip)
+            .Take(pagination.PageSize)
             .OrderBy(m => m.CreatedAt)
             .Select(m => MapToDto(m))
             .ToListAsync();
 
-        return new Response<List<ChatMessageDto>>(messages);
+        var paginatedResponse = new PaginatedResponse<ChatMessageDto>(
+            messages, totalCount, pagination.PageNumber, pagination.PageSize);
+
+        return new Response<PaginatedResponse<ChatMessageDto>>(paginatedResponse);
+    }
+
+    public async Task<Response<ChatMessageDto>> EditMessageAsync(Guid messageId, string userId, string newMessage)
+    {
+        if (string.IsNullOrWhiteSpace(newMessage))
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.BadRequest, "Message cannot be empty");
+        }
+
+        var message = await context.ChatMessages.FindAsync(messageId);
+        if (message == null)
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.NotFound, "Message not found");
+        }
+
+        if (message.UserId != userId)
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.Forbidden, "You can only edit your own messages");
+        }
+
+        if (message.IsDeleted)
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.BadRequest, "Cannot edit deleted message");
+        }
+
+        message.Message = newMessage;
+        message.IsEdited = true;
+        message.EditedAt = DateTime.UtcNow;
+
+        await context.SaveChangesAsync();
+
+        return new Response<ChatMessageDto>(MapToDto(message));
+    }
+
+    public async Task<Response<bool>> DeleteMessageAsync(Guid messageId, string userId)
+    {
+        var message = await context.ChatMessages.FindAsync(messageId);
+        if (message == null)
+        {
+            return new Response<bool>(HttpStatusCode.NotFound, "Message not found");
+        }
+
+        if (message.UserId != userId)
+        {
+            return new Response<bool>(HttpStatusCode.Forbidden,"You can only delete your own messages");
+        }
+
+        // Soft delete
+        message.IsDeleted = true;
+
+        await context.SaveChangesAsync();
+
+        return new Response<bool>(true);
     }
 
     private static ChatMessageDto MapToDto(ChatMessage entity) =>
@@ -173,4 +259,3 @@ public class ChatService(AppDbContext context) : IChatService
             GroupName = entity.GroupName
         };
 }
-

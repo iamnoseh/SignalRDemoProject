@@ -1,5 +1,5 @@
 using Application.Auth.Dto;
-using Infrastructure.Responses;
+using Application.Responses;
 
 namespace Application.Auth;
 

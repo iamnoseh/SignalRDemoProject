@@ -1,9 +1,9 @@
 using Application.Chat;
 using Application.Chat.Dto;
-using Infrastructure.Responses;
+using Application.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using WebApp.Extensions;
 
 namespace WebApp.Controllers;
 
@@ -12,8 +12,7 @@ namespace WebApp.Controllers;
 [Authorize]
 public class GroupsController(IGroupService groupService) : ControllerBase
 {
-    private string CurrentUserId =>
-        User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    private string CurrentUserId => User.GetUserId();
 
     [HttpPost]
     public async Task<ActionResult<Response<ChatGroupDto>>> Create([FromBody] CreateGroupRequest request)

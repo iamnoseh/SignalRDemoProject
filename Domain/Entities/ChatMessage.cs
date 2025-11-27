@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Index(nameof(CreatedAt))]
+[Index(nameof(GroupName))]
+[Index(nameof(ReceiverUserId))]
 public class ChatMessage
 {
     public Guid Id { get; set; }
@@ -15,6 +17,15 @@ public class ChatMessage
     public bool IsPrivate { get; set; }
     public string? ReceiverUserId { get; set; }
     public string? GroupName { get; set; }
+    
+    // Audit fields барои edit/delete
+    public bool IsEdited { get; set; }
+    public DateTime? EditedAt { get; set; }
+    public bool IsDeleted { get; set; }
+    
+    // Navigation properties
+    public AppUser User { get; set; } = default!;
+    public AppUser? ReceiverUser { get; set; }
 }
 
 

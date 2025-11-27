@@ -1,9 +1,9 @@
 using System.Net;
 using Application.Chat;
 using Application.Chat.Dto;
+using Application.Responses;
 using Domain.Entities;
 using Infrastructure.Data;
-using Infrastructure.Responses;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Chat;
@@ -128,6 +128,7 @@ public class GroupService(AppDbContext context) : IGroupService
     public async Task<Response<List<ChatGroupDto>>> GetUserGroupsAsync(string userId)
     {
         var groups = await context.ChatGroupMembers
+            .Include(m => m.Group)  // Eager loading барои N+1 пешгирӣ
             .Where(m => m.UserId == userId)
             .Select(m => new ChatGroupDto
             {
