@@ -9,7 +9,6 @@ using WebApp.Middleware;
 using AspNetCoreRateLimit;
 using Infrastructure.Chat;
 
-
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
@@ -30,6 +29,15 @@ try
     Log.Information("Starting SignalR Chat application");
 
     var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAll", policy =>
+        {
+            policy.AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowAnyOrigin();
+        });
+    });
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
@@ -66,8 +74,10 @@ try
             { jwtSecurityScheme, Array.Empty<string>() }
         });
     });
+
     builder.Host.UseSerilog();
     var app = builder.Build();
+
     using (var scope = app.Services.CreateScope())
     {
         try
@@ -98,16 +108,20 @@ try
         app.UseSwagger();
         app.UseSwaggerUI();
     }
-    app.UseMiddleware<GlobalExceptionMiddleware>();
 
+    app.UseMiddleware<GlobalExceptionMiddleware>();
     app.UseIpRateLimiting();
     app.UseSerilogRequestLogging();
     app.UseStaticFiles();
     app.UseHttpsRedirection();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseCors("AllowAll");
+
     app.MapControllers();
-    app.MapHub<ChatHub>("/chatHub");
+    app.MapHub<ChatHub>("/chatHub").RequireCors("AllowAll"); 
+
     Log.Information("Application configured successfully, starting...");
     app.Run();
 }
