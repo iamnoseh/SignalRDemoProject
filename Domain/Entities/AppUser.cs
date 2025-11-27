@@ -12,6 +12,10 @@ public class AppUser : IdentityUser
     // Friends System
     public ICollection<FriendRequest> SentFriendRequests { get; set; } = new List<FriendRequest>();
     public ICollection<FriendRequest> ReceivedFriendRequests { get; set; } = new List<FriendRequest>();
+
+    // User Profile
+    public string? Nickname { get; set; }
+    public string? ProfilePictureUrl { get; set; }
 }
 
 

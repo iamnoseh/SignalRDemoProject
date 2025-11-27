@@ -56,6 +56,46 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
         return new Response<AuthResultDto>(authResult);
     }
 
+    public async Task<Response<bool>> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new Response<bool>(HttpStatusCode.NotFound, "User not found");
+        }
+
+        user.Nickname = dto.Nickname;
+        var result = await userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+        {
+            var message = string.Join("; ", result.Errors.Select(e => e.Description));
+            return new Response<bool>(HttpStatusCode.BadRequest, message);
+        }
+
+        return new Response<bool>(true);
+    }
+
+    public async Task<Response<string>> UpdateProfilePictureAsync(string userId, string pictureUrl)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new Response<string>(HttpStatusCode.NotFound, "User not found");
+        }
+
+        user.ProfilePictureUrl = pictureUrl;
+        var result = await userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+        {
+            var message = string.Join("; ", result.Errors.Select(e => e.Description));
+            return new Response<string>(HttpStatusCode.BadRequest, message);
+        }
+
+        return new Response<string>(pictureUrl);
+    }
+
 }
 
 
