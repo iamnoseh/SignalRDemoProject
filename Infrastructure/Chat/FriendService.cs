@@ -29,6 +29,14 @@ public class FriendService : IFriendService
             return false;
         }
 
+        // Check if receiver exists
+        var receiverExists = await _context.Users.AnyAsync(u => u.Id == receiverId);
+        if (!receiverExists)
+        {
+            _logger.LogWarning("User {SenderId} tried to send friend request to non-existent user {ReceiverId}", senderId, receiverId);
+            return false;
+        }
+
         // Check if already friends
         var existingFriendship = await _context.Friendships
             .AnyAsync(f => (f.User1Id == senderId && f.User2Id == receiverId) ||
