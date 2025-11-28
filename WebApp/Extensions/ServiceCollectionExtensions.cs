@@ -1,8 +1,10 @@
 using Application.Auth;
 using Application.Chat;
+using Application.Users;
 using AspNetCoreRateLimit;
 using Infrastructure.Auth;
 using Infrastructure.Chat;
+using Infrastructure.Users;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -77,6 +79,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IGroupService, GroupService>();
         services.AddSingleton<IUserStatusService, UserStatusService>();
+        services.AddScoped<IUserService, UserService>();
 
         // SignalR
         services.AddSignalR();

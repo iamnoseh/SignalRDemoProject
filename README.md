@@ -116,9 +116,9 @@ dotnet ef database update --project Infrastructure --startup-project WebApp
 dotnet run --project WebApp
 ```
 
-Приложение будет доступно по адресу: `https://localhost:5001`
+Приложение будет доступно по адресу: `https://localhost:5033`
 
-Swagger UI: `https://localhost:5001/swagger`
+Swagger UI: `https://localhost:5033/swagger`
 
 ---
 
