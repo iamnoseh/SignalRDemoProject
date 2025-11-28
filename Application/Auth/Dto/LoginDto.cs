@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Application.Auth.Dto;
 
 public class LoginDto
 {
-    public string UserName { get; set; } = default!;
-    public string Password { get; set; } = default!;
+    [Required]
+    public string Identifier { get; set; } = string.Empty; // Phone or Nickname
+
+    [Required]
+    public string Password { get; set; } = string.Empty;
 }
-
-

@@ -11,7 +11,7 @@ namespace WebApp.Controllers;
 public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<ActionResult<Response<AuthResultDto>>> Register([FromBody] RegisterDto request)
+    public async Task<ActionResult<Response<string>>> Register([FromBody] RegisterDto request)
     {
         var result = await authService.RegisterAsync(request);
         return StatusCode(result.StatusCode, result);
