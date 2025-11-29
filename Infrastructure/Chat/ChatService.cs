@@ -47,6 +47,8 @@ public class ChatService(
     public async Task<Response<PaginatedResponse<ChatMessageDto>>> GetLastMessagesAsync(PaginationRequest pagination)
     {
         var query = context.ChatMessages
+            .Include(m => m.Reactions)
+                .ThenInclude(r => r.User)
             .Where(m => !m.IsPrivate && m.GroupName == null && !m.IsDeleted);
 
         var totalCount = await query.CountAsync();
@@ -56,11 +58,12 @@ public class ChatService(
             .Skip(pagination.Skip)
             .Take(pagination.PageSize)
             .OrderBy(m => m.CreatedAt)
-            .Select(m => MapToDto(m))
             .ToListAsync();
 
+        var dtos = messages.Select(m => MapToDto(m)).ToList();
+
         var paginatedResponse = new PaginatedResponse<ChatMessageDto>(
-            messages, totalCount, pagination.PageNumber, pagination.PageSize);
+            dtos, totalCount, pagination.PageNumber, pagination.PageSize);
 
         return new Response<PaginatedResponse<ChatMessageDto>>(paginatedResponse);
     }
@@ -119,6 +122,8 @@ public class ChatService(
     public async Task<Response<PaginatedResponse<ChatMessageDto>>> GetGroupHistoryAsync(string groupName, PaginationRequest pagination)
     {
         var query = context.ChatMessages
+            .Include(m => m.Reactions)
+                .ThenInclude(r => r.User)
             .Where(m => !m.IsPrivate && m.GroupName == groupName && !m.IsDeleted);
 
         var totalCount = await query.CountAsync();
@@ -128,11 +133,12 @@ public class ChatService(
             .Skip(pagination.Skip)
             .Take(pagination.PageSize)
             .OrderBy(m => m.CreatedAt)
-            .Select(m => MapToDto(m))
             .ToListAsync();
 
+        var dtos = messages.Select(m => MapToDto(m)).ToList();
+
         var paginatedResponse = new PaginatedResponse<ChatMessageDto>(
-            messages, totalCount, pagination.PageNumber, pagination.PageSize);
+            dtos, totalCount, pagination.PageNumber, pagination.PageSize);
 
         return new Response<PaginatedResponse<ChatMessageDto>>(paginatedResponse);
     }
@@ -182,6 +188,8 @@ public class ChatService(
     public async Task<Response<PaginatedResponse<ChatMessageDto>>> GetPrivateHistoryAsync(string currentUserId, string otherUserId, PaginationRequest pagination)
     {
         var query = context.ChatMessages
+            .Include(m => m.Reactions)
+                .ThenInclude(r => r.User)
             .Where(m => m.IsPrivate && !m.IsDeleted &&
                         ((m.UserId == currentUserId && m.ReceiverUserId == otherUserId) ||
                          (m.UserId == otherUserId && m.ReceiverUserId == currentUserId)));
@@ -193,11 +201,12 @@ public class ChatService(
             .Skip(pagination.Skip)
             .Take(pagination.PageSize)
             .OrderBy(m => m.CreatedAt)
-            .Select(m => MapToDto(m))
             .ToListAsync();
 
+        var dtos = messages.Select(m => MapToDto(m)).ToList();
+
         var paginatedResponse = new PaginatedResponse<ChatMessageDto>(
-            messages, totalCount, pagination.PageNumber, pagination.PageSize);
+            dtos, totalCount, pagination.PageNumber, pagination.PageSize);
 
         return new Response<PaginatedResponse<ChatMessageDto>>(paginatedResponse);
     }

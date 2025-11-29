@@ -42,7 +42,16 @@ try
         });
     });
 
-    builder.Services.AddControllers();
+    // Configure JSON serialization to handle circular references
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            // Ignore circular references in JSON serialization
+            options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            // Optional: make JSON more readable in development
+            options.JsonSerializerOptions.WriteIndented = false;
+        });
+    
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddApplicationServices(builder.Configuration);
     builder.Services.AddScoped<IFriendService, FriendService>();
