@@ -113,10 +113,11 @@ try
     app.UseStaticFiles();
     app.UseHttpsRedirection();
 
+    // CORS must be before Authentication/Authorization for WebSocket connections
+    app.UseCors("AllowAll");
+
     app.UseAuthentication();
     app.UseAuthorization();
-
-    app.UseCors("AllowAll");
 
     app.MapControllers();
     app.MapHub<ChatHub>("/chatHub").RequireCors("AllowAll");
