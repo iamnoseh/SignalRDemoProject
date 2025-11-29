@@ -32,6 +32,8 @@
 - ✅ Статус пользователей (Online/Offline)
 - ✅ Индикаторы набора текста (Typing indicators)
 - ✅ Редактирование и удаление сообщений
+- ✅ Реакции на сообщения (Reactions) 👍❤️😂
+- ✅ Статус прочтения сообщений (Read Receipts) ✔✔
 
 ---
 
@@ -613,6 +615,30 @@ await connection.invoke("DeleteMessage", messageId);
 
 ---
 
+#### 10. Добавить реакцию на сообщение
+```javascript
+await connection.invoke("ReactToMessage", messageId, "👍");
+// Или другие эмодзи: "❤️", "😂", "🔥", etc.
+```
+
+---
+
+#### 11. Удалить свою реакцию
+```javascript
+await connection.invoke("RemoveReaction", messageId);
+```
+
+---
+
+#### 12. Отметить сообщение как прочитанное
+```javascript
+await connection.invoke("MarkMessageAsRead", messageId);
+```
+
+**Примечание:** Только получатель приватного сообщения может отметить его как прочитанное.
+
+---
+
 ### Hub Events (получение с сервера)
 
 #### 1. Получить сообщение (глобальный чат)
@@ -705,6 +731,27 @@ connection.on("MessageDeleted", (messageId) => {
 
 ---
 
+#### 11. Реакция на сообщение
+```javascript
+connection.on("MessageReaction", (messageId, reactionDto) => {
+    console.log(`Reaction on message ${messageId}:`, reactionDto);
+    // reactionDto содержит: { id, userId, userName, reaction, createdAt }
+    // Или { userId, removed: true } если реакция удалена
+});
+```
+
+---
+
+#### 12. Сообщение прочитано
+```javascript
+connection.on("MessageRead", (messageId, readByUserId, readAt) => {
+    console.log(`Message ${messageId} was read by ${readByUserId} at ${readAt}`);
+    // Показать двойную галочку (✔✔) в UI
+});
+```
+
+---
+
 ## База данных
 
 ### Таблицы
@@ -718,18 +765,23 @@ connection.on("MessageDeleted", (messageId) => {
    - Type (Text/Image/File), FileUrl, FileName
    - IsPrivate, ReceiverUserId, GroupName
    - IsEdited, EditedAt, IsDeleted
+   - IsRead, ReadAt (для приватных сообщений)
 
-3. **ChatGroups** - Группы
+3. **ChatReactions** - Реакции на сообщения
+   - Id, MessageId, UserId, Reaction (эмодзи)
+   - CreatedAt
+
+4. **ChatGroups** - Группы
    - Id, Name, Description, OwnerUserId
 
-4. **ChatGroupMembers** - Участники групп
+5. **ChatGroupMembers** - Участники групп
    - Id, GroupId, UserId, JoinedAt
 
-5. **Friendships** - Дружба
+6. **Friendships** - Дружба
    - User1Id, User2Id (составной ключ)
    - CreatedAt
 
-6. **FriendRequests** - Запросы в друзья
+7. **FriendRequests** - Запросы в друзья
    - Id, SenderId, ReceiverId
    - Status (Pending/Accepted/Rejected)
    - CreatedAt

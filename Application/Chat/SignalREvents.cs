@@ -26,4 +26,6 @@ public static class SignalREvents
     // Message operations
     public const string MessageEdited = "MessageEdited";
     public const string MessageDeleted = "MessageDeleted";
+    public const string MessageReaction = "MessageReaction";
+    public const string MessageRead = "MessageRead";
 }

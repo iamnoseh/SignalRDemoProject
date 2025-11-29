@@ -17,4 +17,9 @@ public interface IChatService
     // Edit/Delete operations
     Task<Response<ChatMessageDto>> EditMessageAsync(Guid messageId, string userId, string newMessage);
     Task<Response<bool>> DeleteMessageAsync(Guid messageId, string userId);
+    
+    // Reactions and Read Receipts
+    Task<Response<ReactionDto>> ReactToMessageAsync(Guid messageId, string userId, string reaction);
+    Task<Response<bool>> RemoveReactionAsync(Guid messageId, string userId);
+    Task<Response<ChatMessageDto>> MarkMessageAsReadAsync(Guid messageId, string userId);
 }

@@ -23,9 +23,13 @@ public class ChatMessage
     public DateTime? EditedAt { get; set; }
     public bool IsDeleted { get; set; }
     
+    public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
+    
     // Navigation properties
     public AppUser User { get; set; } = default!;
     public AppUser? ReceiverUser { get; set; }
+    public ICollection<ChatReaction> Reactions { get; set; } = new List<ChatReaction>();
 }
 
 

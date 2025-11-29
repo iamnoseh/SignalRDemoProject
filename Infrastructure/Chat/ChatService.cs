@@ -255,6 +255,103 @@ public class ChatService(
         return new Response<bool>(true);
     }
 
+    public async Task<Response<ReactionDto>> ReactToMessageAsync(Guid messageId, string userId, string reaction)
+    {
+        var message = await context.ChatMessages.FindAsync(messageId);
+        if (message == null)
+        {
+            return new Response<ReactionDto>(HttpStatusCode.NotFound, "Message not found");
+        }
+
+        if (string.IsNullOrWhiteSpace(reaction))
+        {
+            return new Response<ReactionDto>(HttpStatusCode.BadRequest, "Reaction cannot be empty");
+        }
+
+        // Check if user already reacted
+        var existingReaction = await context.ChatReactions
+            .FirstOrDefaultAsync(r => r.MessageId == messageId && r.UserId == userId);
+
+        if (existingReaction != null)
+        {
+            // Update existing reaction
+            existingReaction.Reaction = reaction;
+            existingReaction.CreatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            // Create new reaction
+            existingReaction = new ChatReaction
+            {
+                Id = Guid.NewGuid(),
+                MessageId = messageId,
+                UserId = userId,
+                Reaction = reaction,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.ChatReactions.Add(existingReaction);
+        }
+
+        await context.SaveChangesAsync();
+
+        // Get user name for DTO
+        var user = await userManager.FindByIdAsync(userId);
+        var reactionDto = new ReactionDto
+        {
+            Id = existingReaction.Id,
+            UserId = userId,
+            UserName = user?.UserName ?? "Unknown",
+            Reaction = reaction,
+            CreatedAt = existingReaction.CreatedAt
+        };
+
+        return new Response<ReactionDto>(reactionDto);
+    }
+
+    public async Task<Response<bool>> RemoveReactionAsync(Guid messageId, string userId)
+    {
+        var reaction = await context.ChatReactions
+            .FirstOrDefaultAsync(r => r.MessageId == messageId && r.UserId == userId);
+
+        if (reaction == null)
+        {
+            return new Response<bool>(HttpStatusCode.NotFound, "Reaction not found");
+        }
+
+        context.ChatReactions.Remove(reaction);
+        await context.SaveChangesAsync();
+
+        return new Response<bool>(true);
+    }
+
+    public async Task<Response<ChatMessageDto>> MarkMessageAsReadAsync(Guid messageId, string userId)
+    {
+        var message = await context.ChatMessages
+            .Include(m => m.Reactions)
+            .ThenInclude(r => r.User)
+            .FirstOrDefaultAsync(m => m.Id == messageId);
+
+        if (message == null)
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.NotFound, "Message not found");
+        }
+
+        // Only the receiver can mark as read
+        if (!message.IsPrivate || message.ReceiverUserId != userId)
+        {
+            return new Response<ChatMessageDto>(HttpStatusCode.Forbidden, "Only the receiver can mark a private message as read");
+        }
+
+        if (!message.IsRead)
+        {
+            message.IsRead = true;
+            message.ReadAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+        }
+
+        return new Response<ChatMessageDto>(MapToDto(message));
+    }
+
     private static ChatMessageDto MapToDto(ChatMessage entity) =>
         new()
         {
@@ -268,6 +365,19 @@ public class ChatService(
             CreatedAt = entity.CreatedAt,
             IsPrivate = entity.IsPrivate,
             ReceiverUserId = entity.ReceiverUserId,
-            GroupName = entity.GroupName
+            GroupName = entity.GroupName,
+            IsEdited = entity.IsEdited,
+            EditedAt = entity.EditedAt,
+            IsDeleted = entity.IsDeleted,
+            IsRead = entity.IsRead,
+            ReadAt = entity.ReadAt,
+            Reactions = entity.Reactions?.Select(r => new ReactionDto
+            {
+                Id = r.Id,
+                UserId = r.UserId,
+                UserName = r.User?.UserName ?? "Unknown",
+                Reaction = r.Reaction,
+                CreatedAt = r.CreatedAt
+            }).ToList() ?? new List<ReactionDto>()
         };
 }

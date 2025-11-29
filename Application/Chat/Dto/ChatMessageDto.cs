@@ -15,6 +15,13 @@ public class ChatMessageDto
     public Domain.Enums.MessageType Type { get; set; }
     public string? FileUrl { get; set; }
     public string? FileName { get; set; }
+    
+    public bool IsEdited { get; set; }
+    public DateTime? EditedAt { get; set; }
+    public bool IsDeleted { get; set; }
+    
+    public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
+    
+    public List<ReactionDto> Reactions { get; set; } = new();
 }
-
-

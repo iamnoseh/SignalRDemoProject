@@ -205,4 +205,46 @@ public class ChatHub(
             await Clients.All.SendAsync(SignalREvents.MessageDeleted, messageId);
         }
     }
+    
+    // Reactions
+    public async Task ReactToMessage(Guid messageId, string reaction)
+    {
+        var userId = Context.User!.GetUserId();
+        var result = await chatService.ReactToMessageAsync(messageId, userId, reaction);
+        
+        if (result.Data != null)
+        {
+            // Broadcast reaction to all clients (or specific group/users based on message type)
+            await Clients.All.SendAsync(SignalREvents.MessageReaction, messageId, result.Data);
+        }
+    }
+    
+    public async Task RemoveReaction(Guid messageId)
+    {
+        var userId = Context.User!.GetUserId();
+        var result = await chatService.RemoveReactionAsync(messageId, userId);
+        
+        if (result.Data)
+        {
+            await Clients.All.SendAsync(SignalREvents.MessageReaction, messageId, new { userId, removed = true });
+        }
+    }
+    
+    // Read Receipts
+    public async Task MarkMessageAsRead(Guid messageId)
+    {
+        var userId = Context.User!.GetUserId();
+        var result = await chatService.MarkMessageAsReadAsync(messageId, userId);
+        
+        if (result.Data != null)
+        {
+            // Notify the sender that their message was read
+            var message = result.Data;
+            if (message.IsPrivate && message.UserId != null)
+            {
+                await Clients.User(message.UserId)
+                    .SendAsync(SignalREvents.MessageRead, messageId, userId, message.ReadAt);
+            }
+        }
+    }
 }

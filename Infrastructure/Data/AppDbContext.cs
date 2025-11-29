@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ChatGroupMember> ChatGroupMembers { get; set; }
     public DbSet<FriendRequest> FriendRequests { get; set; }
     public DbSet<Friendship> Friendships { get; set; }
+    public DbSet<ChatReaction> ChatReactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
