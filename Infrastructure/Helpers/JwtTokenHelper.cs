@@ -19,8 +19,13 @@ public static class JwtTokenHelper
 
         var authClaims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Name, user.UserName ?? string.Empty)
+            new("id", user.Id),
+            new("userName", user.UserName ?? string.Empty),
+            new("nickname", user.Nickname ?? string.Empty),
+            new("fullName", user.FullName ?? string.Empty),
+            new(ClaimTypes.Email, user.Email ?? string.Empty),
+            new("email", user.Email ?? string.Empty),
+            new("profilePictureUrl", user.ProfilePictureUrl ?? string.Empty)
         };
 
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));

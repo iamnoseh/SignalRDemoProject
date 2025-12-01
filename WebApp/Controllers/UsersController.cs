@@ -17,4 +17,11 @@ public class UsersController(IUserService userService) : ControllerBase
         var result = await userService.SearchUsersAsync(query);
         return StatusCode(result.StatusCode, result);
     }
+
+    [HttpGet]
+    public async Task<ActionResult<Response<List<UserDto>>>> GetAllUsers()
+    {
+        var result = await userService.GetAllUsersAsync();
+        return StatusCode(result.StatusCode, result);
+    }
 }

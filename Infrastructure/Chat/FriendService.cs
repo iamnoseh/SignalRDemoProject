@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Chat;
+using Application.Users.Dto;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.Data;
@@ -112,7 +113,7 @@ public class FriendService(
         return true;
     }
 
-    public async Task<List<AppUser>> GetFriendsAsync(string userId)
+    public async Task<List<UserDto>> GetFriendsAsync(string userId)
     {
         var friendIds = await context.Friendships
             .Where(f => f.User1Id == userId || f.User2Id == userId)
@@ -121,6 +122,15 @@ public class FriendService(
 
         var friends = await context.Users
             .Where(u => friendIds.Contains(u.Id))
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Nickname = u.Nickname,
+                UserName = u.UserName,
+                FullName = u.FullName,
+                Email = u.Email,
+                ProfilePictureUrl = u.ProfilePictureUrl
+            })
             .ToListAsync();
 
         return friends;
