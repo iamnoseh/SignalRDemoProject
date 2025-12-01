@@ -19,6 +19,11 @@ public static class JwtTokenHelper
 
         var authClaims = new List<Claim>
         {
+            // Standard claims required by ASP.NET Core Identity
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.UserName ?? string.Empty),
+            
+            // Custom claims for frontend
             new("id", user.Id),
             new("userName", user.UserName ?? string.Empty),
             new("nickname", user.Nickname ?? string.Empty),
@@ -41,5 +46,3 @@ public static class JwtTokenHelper
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
-
-
