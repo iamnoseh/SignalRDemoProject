@@ -118,9 +118,9 @@ dotnet ef database update --project Infrastructure --startup-project WebApp
 dotnet run --project WebApp
 ```
 
-Приложение будет доступно по адресу: `https://localhost:5033`
+Приложение будет доступно по адресу: `http://localhost:5033` или `https://localhost:7058`
 
-Swagger UI: `https://localhost:5033/swagger`
+Swagger UI: `http://localhost:5033/swagger`
 
 ---
 
@@ -532,7 +532,9 @@ Authorization: Bearer {token}
 **JavaScript пример:**
 ```javascript
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/chatHub", {
+    // Use the absolute URL including the port where the backend is running
+    // Default HTTP port: 5033, HTTPS: 7058
+    .withUrl("http://localhost:5033/chatHub", {
         accessTokenFactory: () => yourJwtToken
     })
     .build();

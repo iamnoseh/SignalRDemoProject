@@ -81,8 +81,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUserStatusService, UserStatusService>();
         services.AddScoped<IUserService, UserService>();
 
-        // SignalR
-        services.AddSignalR();
+        // SignalR with extended timeouts for Postman testing
+        services.AddSignalR(options =>
+        {
+            options.HandshakeTimeout = TimeSpan.FromSeconds(60);
+            options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(120);
+            options.EnableDetailedErrors = true;
+        });
 
         // Rate Limiting
         services.AddMemoryCache();

@@ -35,23 +35,19 @@ try
     {
         options.AddPolicy("AllowAll", policy =>
         {
-            policy.SetIsOriginAllowed(origin => true) 
+            policy.SetIsOriginAllowed(origin => true)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials();                  
+                .AllowCredentials();
         });
     });
-
-    // Configure JSON serialization to handle circular references
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
         {
-            // Ignore circular references in JSON serialization
             options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-            // Optional: make JSON more readable in development
             options.JsonSerializerOptions.WriteIndented = false;
         });
-    
+
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddApplicationServices(builder.Configuration);
     builder.Services.AddScoped<IFriendService, FriendService>();
@@ -111,9 +107,9 @@ try
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "SignalR Chat API v1");
-        c.RoutePrefix = "swagger";           
-        c.DisplayOperationId();              
-        c.DisplayRequestDuration();         
+        c.RoutePrefix = "swagger";
+        c.DisplayOperationId();
+        c.DisplayRequestDuration();
     });
 
     app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -122,7 +118,6 @@ try
     app.UseStaticFiles();
     app.UseHttpsRedirection();
 
-    // CORS must be before Authentication/Authorization for WebSocket connections
     app.UseCors("AllowAll");
 
     app.UseAuthentication();
@@ -131,9 +126,9 @@ try
     app.MapControllers();
     app.MapHub<ChatHub>("/chatHub").RequireCors("AllowAll");
 
-    Log.Information("Application configured successfully. Listening on {Urls}", 
+    Log.Information("Application configured successfully. Listening on {Urls}",
         string.Join(", ", builder.Configuration.GetValue<string>("ASPNETCORE_URLS") ?? "http://localhost:1111"));
-    
+
     app.Run();
 }
 catch (Exception ex)
